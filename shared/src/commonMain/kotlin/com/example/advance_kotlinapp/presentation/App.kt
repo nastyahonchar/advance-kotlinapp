@@ -51,7 +51,9 @@ fun App(
                 onPost = {
                     viewModel.createPost()
                 },
-                onPut = { },
+                onPut = {
+                    viewModel.updatePost()
+                },
                 onDelete = { }
             )
         }
