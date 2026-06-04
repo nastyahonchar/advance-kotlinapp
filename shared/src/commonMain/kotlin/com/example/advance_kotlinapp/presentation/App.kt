@@ -45,7 +45,9 @@ fun App(
         ) {
             AppContent(
                 state = state,
-                onGet = { },
+                onGet = {
+                    viewModel.fetchPosts()
+                },
                 onPost = { },
                 onPut = { },
                 onDelete = { }

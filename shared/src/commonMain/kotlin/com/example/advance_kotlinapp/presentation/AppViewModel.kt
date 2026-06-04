@@ -2,11 +2,16 @@ package com.example.advance_kotlinapp.presentation
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.advance_kotlinapp.data.common.NetworkResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import com.example.advance_kotlinapp.domain.posts.PostRepository
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
 class AppViewModel internal constructor(
@@ -15,6 +20,30 @@ class AppViewModel internal constructor(
 
     private val _state = MutableStateFlow(AppState())
     internal val state: StateFlow<AppState> = _state.asStateFlow()
+
+    init {
+        fetchPosts()
+    }
+
+    internal fun fetchPosts() {
+        toggleProgressVisibility()
+        viewModelScope.launch {
+            resetPreviousResults()
+            delay(350.milliseconds)
+            when (val result = postRepository.getAllPosts()) {
+                is NetworkResult.Success -> {
+                    _state.update {
+                        it.copy(posts = result.data.posts, result = result.data.toString())
+                    }
+                    toggleProgressVisibility()
+                }
+                is NetworkResult.Failure -> {
+                    _state.update { it.copy(error = result.errorMessage) }
+                    toggleProgressVisibility()
+                }
+            }
+        }
+    }
 
     private fun toggleProgressVisibility() {
         _state.update { it.copy(isProgressVisible = !it.isProgressVisible) }
