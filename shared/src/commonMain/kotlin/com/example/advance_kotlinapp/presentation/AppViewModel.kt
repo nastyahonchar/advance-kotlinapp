@@ -4,6 +4,8 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.advance_kotlinapp.data.common.NetworkResult
+import com.example.advance_kotlinapp.data.posts.model.requests.NewPost
+import com.example.advance_kotlinapp.data.posts.model.responses.Reactions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +47,24 @@ class AppViewModel internal constructor(
         }
     }
 
+    internal fun createPost() {
+        toggleProgressVisibility()
+        viewModelScope.launch {
+            resetPreviousResults()
+            delay(350.milliseconds)
+            when (val result = postRepository.addPost(createNewPost())) {
+                is NetworkResult.Success -> {
+                    _state.update { it.copy(result = result.data.toString()) }
+                    toggleProgressVisibility()
+                }
+                is NetworkResult.Failure -> {
+                    _state.update { it.copy(error = result.errorMessage) }
+                    toggleProgressVisibility()
+                }
+            }
+        }
+    }
+
     private fun toggleProgressVisibility() {
         _state.update { it.copy(isProgressVisible = !it.isProgressVisible) }
     }
@@ -52,5 +72,15 @@ class AppViewModel internal constructor(
     private fun resetPreviousResults() {
         _state.update { it.copy(result = null) }
         _state.update { it.copy(error = null) }
+    }
+
+    private fun createNewPost(): NewPost {
+        return NewPost(
+            body = "Body text",
+            reactions = Reactions(),
+            tags = listOf("Tag 1", "Tag 2"),
+            title = "Title text",
+            userId = 5,
+        )
     }
 }
